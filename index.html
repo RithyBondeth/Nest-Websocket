@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Chatroom Test</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <style>
+      .joined {
+        color: green;
+      }
+      .left {
+        color: red;
+      }
+    </style>
+  </head>
+  <body>
+    <ul id="messages"></ul>
+    <input type="text" id="messageInput" placeholder="Type your message..." />
+    <button id="sendButton">Send</button>
+
+    <script src="cdn.socket.io"></script>
+    <script>
+      // Dom elements
+      const messageInput = document.getElementById('messageInput');
+      const sendButton = document.getElementById('sendButton');
+      const messageList = document.getElementById('messages');
+
+      // Connect to socket server
+      const socket = io('http://localhost:3002');
+
+      // Function to add new message to the Chat UI
+      function addMessage(message, className) {
+        const li = document.createElement('li');
+        li.textContent = message;
+        if (className) {
+          li.classList.add(className);
+        }
+        messageList.appendChild(li);
+      }
+
+      // Event Listener for receiving message from the server
+      socket.on('message', (data) => {
+        addMessage(`${data.username}: ${data.message}`);
+      });
+
+      // Event Listener for user joined event
+      socket.on('user-joined', (data) => {
+        addMessage(data.message, 'joined');
+      });
+
+      // Event Listener for user left event
+      socket.on('user-left', (data) => {
+        addMessage(data.message, 'left');
+      });
+
+      //
+      sendButton.addEventListener('click', () => {
+        const message = messageInput.value.trim();
+
+        if (message != '') {
+          console.log(message);
+          // Emit the newMessage event to the server with ClientID as a username
+          socket.emit('newMessage', { message, username: socket.id });
+          messageInput.value = '';
+        }
+      });
+
+      // Add a message to the chat UI when the client connect
+      socket.on('connect', () => {
+        addMessage('You have joined the chat');
+      });
+    </script>
+  </body>
+</html>
